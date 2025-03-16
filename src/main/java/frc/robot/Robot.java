@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.util.sendable.SendableRegistry;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
@@ -25,11 +26,11 @@ public class Robot extends TimedRobot {
     private final XboxController driverController;
 
     // TODO: Remember to verify your motor controller type and port numbers/CAN IDs
-    private final PWMSparkMax leftFrontMotor = new PWMSparkMax(0);
-    private final PWMSparkMax leftRearMotor = new PWMSparkMax(1);
-    private final PWMSparkMax rightFrontMotor = new PWMSparkMax(2);
-    private final PWMSparkMax rightRearMotor = new PWMSparkMax(3);
-    private final PWMSparkMax coralMotor = new PWMSparkMax(4); 
+    private final PWMSparkMax leftFrontMotor = new PWMSparkMax(1);
+    private final PWMSparkMax leftRearMotor = new PWMSparkMax(2);
+    private final PWMSparkMax rightFrontMotor = new PWMSparkMax(3);
+    private final PWMSparkMax rightRearMotor = new PWMSparkMax(4);
+    private final PWMSparkMax coralMotor = new PWMSparkMax(5); 
 
     private boolean wasAutonExecuted;
     private int autonStep;
@@ -39,15 +40,16 @@ public class Robot extends TimedRobot {
         // We need to invert one side of the drivetrain so that positive voltages
         // result in both sides moving forward. Depending on how your robot's
         // gearbox is constructed, you might have to invert the left side instead.
-        rightFrontMotor.setInverted(true);
-        rightRearMotor.setInverted(true);
+        //rightFrontMotor.setInverted(true);
+        //rightRearMotor.setInverted(true);
         rightFrontMotor.addFollower(rightRearMotor);
+        leftFrontMotor.setInverted(true);
         leftFrontMotor.addFollower(leftRearMotor);
 
         robotDrive = new DifferentialDrive(leftFrontMotor::set, rightFrontMotor::set);
         // leftStick = new Joystick(0);
         // rightStick = new Joystick(1);
-        driverController = new XboxController(2);
+        driverController = new XboxController(0);
 
         // TODO: Remember to add your motors to the SendableRegistry.
         SendableRegistry.addChild(robotDrive, leftFrontMotor);
@@ -76,15 +78,15 @@ public class Robot extends TimedRobot {
         }*/
 
         if (driverController.getAButton()) {
-            coralSpeed = 0.5;
+            coralSpeed = 0.375;
         } else if (driverController.getBButton()) {
-            coralSpeed = -0.5;
+            coralSpeed = -0.375;
         }
 
         // Set the motor outputs. Invert the Y axis so that forward is positive and backward is negative.
-        double leftSpeed = -driverController.getLeftY();
-        double rightSpeed = -driverController.getRightY();
-        robotDrive.tankDrive(leftSpeed, rightSpeed);
+        double leftSpeed = -driverController.getLeftY() * 0.6;
+        double rightSpeed = -driverController.getRightY() * 0.6;
+        robotDrive.tankDrive(leftSpeed, rightSpeed, true);
         coralMotor.set(coralSpeed);
     }
 
