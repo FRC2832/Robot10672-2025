@@ -5,12 +5,12 @@
 package frc.robot;
 
 import edu.wpi.first.util.sendable.SendableRegistry;
-import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 
 /**
  * This is a demo program showing the use of the DifferentialDrive class,
@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
  */
 public class Robot extends TimedRobot {
     private static final Timer ROBOT_TIMER = new Timer();
+    private final SendableChooser<Integer> autonChooser = new SendableChooser<>();
     private final DifferentialDrive robotDrive;
     // private final Joystick leftStick;
     // private final Joystick rightStick;
@@ -30,18 +31,19 @@ public class Robot extends TimedRobot {
     private final PWMSparkMax leftRearMotor = new PWMSparkMax(2);
     private final PWMSparkMax rightFrontMotor = new PWMSparkMax(3);
     private final PWMSparkMax rightRearMotor = new PWMSparkMax(4);
-    private final PWMSparkMax coralMotor = new PWMSparkMax(5); 
+    private final PWMSparkMax coralMotor = new PWMSparkMax(5);
 
     private boolean wasAutonExecuted;
     private int autonStep;
+    private int chosenAuton;
 
     /** Called once at the beginning of the robot program. */
     public Robot() {
         // We need to invert one side of the drivetrain so that positive voltages
         // result in both sides moving forward. Depending on how your robot's
         // gearbox is constructed, you might have to invert the left side instead.
-        //rightFrontMotor.setInverted(true);
-        //rightRearMotor.setInverted(true);
+        // rightFrontMotor.setInverted(true);
+        // rightRearMotor.setInverted(true);
         rightFrontMotor.addFollower(rightRearMotor);
         leftFrontMotor.setInverted(true);
         leftFrontMotor.addFollower(leftRearMotor);
@@ -57,6 +59,9 @@ public class Robot extends TimedRobot {
         SendableRegistry.addChild(robotDrive, rightFrontMotor);
         SendableRegistry.addChild(robotDrive, rightRearMotor);
         SendableRegistry.add(coralMotor, "Coral Motor");
+        autonChooser.setDefaultOption("Do nothing", 0);
+        autonChooser.addOption("Drive forward and turn", 1);
+        autonChooser.addOption("Drive and score coral", 2);
     }
 
     @Override
@@ -68,14 +73,17 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic() {
         double coralSpeed = 0.0; // Default to no movement
+        // TODO: Maybe add a drive speed multiplier variable?
         // Get the buttons from a Joystick or XboxController and use them
         // to control the coral mechanism.
 
-        /*if (leftStick.getRawButton(1) || rightStick.getRawButton(1)) {
-            coralSpeed = 0.5;
-        } else if (leftStick.getRawButton(2) || rightStick.getRawButton(2)) {
-            coralSpeed = -0.5;
-        }*/
+        /*
+         * if (leftStick.getRawButton(1) || rightStick.getRawButton(1)) {
+         * coralSpeed = 0.5;
+         * } else if (leftStick.getRawButton(2) || rightStick.getRawButton(2)) {
+         * coralSpeed = -0.5;
+         * }
+         */
 
         if (driverController.getAButton()) {
             coralSpeed = 0.375;
@@ -83,7 +91,8 @@ public class Robot extends TimedRobot {
             coralSpeed = -0.375;
         }
 
-        // Set the motor outputs. Invert the Y axis so that forward is positive and backward is negative.
+        // Set the motor outputs. Invert the Y axis so that forward is positive and
+        // backward is negative.
         double leftSpeed = -driverController.getLeftY() * 0.6;
         double rightSpeed = -driverController.getRightY() * 0.6;
         robotDrive.tankDrive(leftSpeed, rightSpeed, true);
@@ -94,6 +103,11 @@ public class Robot extends TimedRobot {
     public void autonomousInit() {
         wasAutonExecuted = false;
         autonStep = 0;
+        chosenAuton = autonChooser.getSelected();
+        if (chosenAuton == 0) {
+            // Do nothing.
+            wasAutonExecuted = true;
+        }
     }
 
     @Override
@@ -116,8 +130,7 @@ public class Robot extends TimedRobot {
                 robotDrive.tankDrive(0.5, 0.5);
                 if (ROBOT_TIMER.get() > 2.0) {
                     robotDrive.tankDrive(0.0, 0.0);
-                    //autonStep++;
-                    autonStep = autonStep + 1;
+                    autonStep++;
                 }
                 break;
             case 1:
@@ -126,10 +139,15 @@ public class Robot extends TimedRobot {
                 robotDrive.tankDrive(0.5, -0.5);
                 if (ROBOT_TIMER.get() > 3.0) {
                     robotDrive.tankDrive(0.0, 0.0);
-                    autonStep++;
+                    if (chosenAuton == 1) {
+                        // If the user chose the move-only auton routine, we're done.
+                        autonStep = 3;
+                    } else {
+                        autonStep++;
+                    }
                 }
                 break;
-            /*case 2:
+            case 2:
                 // Run coral mechanism for 2 seconds.
                 coralMotor.set(0.5);
                 robotDrive.tankDrive(0.0, 0.0);
@@ -137,7 +155,7 @@ public class Robot extends TimedRobot {
                     coralMotor.set(0.0);
                     autonStep++;
                 }
-                break;*/
+                break;
             default:
                 coralMotor.set(0.0);
                 robotDrive.tankDrive(0.0, 0.0);
