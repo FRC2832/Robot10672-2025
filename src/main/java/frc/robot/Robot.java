@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * This is a demo program showing the use of the DifferentialDrive class,
@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
  */
 public class Robot extends TimedRobot {
     private static final Timer ROBOT_TIMER = new Timer();
-    private final SendableChooser<Integer> autonChooser = new SendableChooser<>();
     private final DifferentialDrive robotDrive;
     // private final Joystick leftStick;
     // private final Joystick rightStick;
@@ -35,7 +34,7 @@ public class Robot extends TimedRobot {
 
     private boolean wasAutonExecuted;
     private int autonStep;
-    private int chosenAuton;
+    private String chosenAuton = "Do Nothing";
 
     /** Called once at the beginning of the robot program. */
     public Robot() {
@@ -59,9 +58,11 @@ public class Robot extends TimedRobot {
         SendableRegistry.addChild(robotDrive, rightFrontMotor);
         SendableRegistry.addChild(robotDrive, rightRearMotor);
         SendableRegistry.add(coralMotor, "Coral Motor");
-        autonChooser.setDefaultOption("Do nothing", 0);
-        autonChooser.addOption("Drive forward and turn", 1);
-        autonChooser.addOption("Drive and score coral", 2);
+        SmartDashboard.putStringArray("Auto List", new String[] {"Drive and Turn", "Drive, Turn, and Score", "Do Nothing"});
+        //autonChooser.setDefaultOption("Do nothing", 0);
+        //autonChooser.addOption("Drive forward and turn", 1);
+        //autonChooser.addOption("Drive and score coral", 2);
+
     }
 
     @Override
@@ -108,8 +109,8 @@ public class Robot extends TimedRobot {
     public void autonomousInit() {
         wasAutonExecuted = false;
         autonStep = 0;
-        chosenAuton = autonChooser.getSelected();
-        if (chosenAuton == 0) {
+        chosenAuton = SmartDashboard.getString("Auto Selector", "Do Nothing");
+        if (chosenAuton.equals("Do Nothing")) {
             // Do nothing.
             wasAutonExecuted = true;
         }
@@ -144,7 +145,7 @@ public class Robot extends TimedRobot {
                 robotDrive.tankDrive(-0.5, 0.5);
                 if (ROBOT_TIMER.get() > 3.0) {
                     robotDrive.tankDrive(0.0, 0.0);
-                    if (chosenAuton == 1) {
+                    if (chosenAuton.equals("Drive and Turn")) {
                         // If the user chose the move-only auton routine, we're done.
                         autonStep = 4;
                     } else {
@@ -153,8 +154,6 @@ public class Robot extends TimedRobot {
                 }
                 break;
             case 2:
-                // Start the timer if it hasn't been started yet.
-                ROBOT_TIMER.start();
                 // Drive forward for 2.5 seconds.
                 coralMotor.set(0.0);
                 robotDrive.tankDrive(0.5, 0.5);
