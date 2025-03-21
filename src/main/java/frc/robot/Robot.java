@@ -165,7 +165,7 @@ public class Robot extends TimedRobot {
                 break;
             case 3:
                 // Run coral mechanism for 2 seconds.
-                coralMotor.set(0.5);
+                coralMotor.set(0.375);
                 robotDrive.tankDrive(0.0, 0.0);
                 if (ROBOT_TIMER.get() > 7.5) {
                     coralMotor.set(0.0);
